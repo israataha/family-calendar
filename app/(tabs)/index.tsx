@@ -1,9 +1,12 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { View, StyleSheet, Text, TouchableOpacity } from "react-native";
 import { Agenda, AgendaList, CalendarProvider, ExpandableCalendar } from "react-native-calendars";
+import * as Calendar from "expo-calendar";
+
 import { agendaItems, getMarkedDates } from "../../data/agendaitems";
 import AgendaItem from "@/components/AgendaItem";
 import Timeline from "@/components/Calendar/Timeline";
+import { getCalendarEvents } from "@/utils/events";
 const ITEMS: any[] = agendaItems;
 
 type AgendaItem = {
@@ -11,7 +14,30 @@ type AgendaItem = {
   time: string;
 };
 
-export default function Calendar() {
+export default function CalendarPage() {
+  useEffect(() => {
+    (async () => {
+      const { status } = await Calendar.requestCalendarPermissionsAsync();
+      if (status === "granted") {
+        const calendars = await Calendar.getCalendarsAsync(Calendar.EntityTypes.EVENT);
+
+        console.log("Here are all your calendars:");
+        console.log({ calendars });
+
+        const calendarIds = calendars.map((calendar) => calendar.id);
+        const events = await Calendar.getEventsAsync(calendarIds, new Date(2024, 8, 1), new Date(2024, 8, 8));
+
+        console.log("Here are all your events:");
+        console.log(events);
+
+        const transformedEvents = getCalendarEvents(events, calendars);
+
+        console.log("Here are all your transformed events:");
+        console.log(transformedEvents);
+      }
+    })();
+  }, []);
+
   const [selectedView, setSelectedView] = useState("agenda");
   const marked = useRef(getMarkedDates());
 
